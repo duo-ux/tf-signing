@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>调头像 · 签售头像微调工具</title>
+<style>
+:root { --ink:#242a2c; --paper:#f5efdf; --gold:#cdb05d; --gold-d:#a8893f; --red:#cf6155; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: linear-gradient(180deg, #efe9da, #f7f3e8);
+  color: var(--ink);
+  font: 15px/1.55 -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  max-width: 520px;
+  margin: 0 auto;
+  -webkit-tap-highlight-color: transparent;
+}
+header h1 { font-size: 22px; margin: 0; display: inline-block; }
+header .sub { margin: 2px 0 0; font-size: 13px; color: #7a7264; }
+.badge { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px;
+  background: #f2d9b0; color: #7a5410; font-size: 12px; vertical-align: 3px; }
+
+/* ── 成员切换 ── */
+.nav { display: flex; gap: 8px; align-items: stretch; margin: 14px 0 6px; }
+.nav button {
+  flex: 0 0 48px; border: 1px solid var(--gold); background: #fffdf6; color: var(--ink);
+  border-radius: 10px; font-size: 18px; padding: 8px 0; touch-action: manipulation;
+}
+.nav button:active { background: #f2e7c8; }
+.nav select {
+  flex: 1; min-width: 0; border: 1px solid var(--gold); background: #fffdf6; color: var(--ink);
+  border-radius: 10px; font-size: 15px; padding: 8px 10px; font-weight: 600;
+}
+#mname { margin: 2px 2px 12px; font-size: 13px; color: #7a7264; }
+
+/* ── 预览区：游戏里最终效果 + 原图取景框 ── */
+.previews { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+.circle-wrap {
+  position: relative; width: 200px; height: 200px; border-radius: 50%;
+  overflow: hidden; border: 2px solid var(--gold); background: #efe9da;
+  box-shadow: 0 3px 10px rgba(67,37,12,.18); flex-shrink: 0;
+}
+.circle-wrap img {
+  position: absolute; left: 50%; top: 0; width: 100%; max-width: none; height: auto;
+  transform: translateX(-50%); pointer-events: none;
+}
+/* 参考十字线：圆中心 */
+.circle-wrap .hline, .circle-wrap .vline {
+  position: absolute; background: rgba(207,97,85,.75); pointer-events: none; z-index: 3;
+}
+.circle-wrap .hline { left: 0; right: 0; top: 50%; height: 1px; }
+.circle-wrap .vline { top: 0; bottom: 0; left: 50%; width: 1px; }
+.full-wrap { position: relative; flex-shrink: 0; }
+.full-wrap img { display: block; width: 150px; height: auto; box-shadow: 0 2px 8px rgba(67,37,12,.15); }
+.full-wrap .band {
+  position: absolute; border: 2px dashed #e0483f; background: rgba(224,72,63,.13);
+  pointer-events: none;
+}
+.cap { width: 150px; margin-top: 5px; font-size: 12px; color: #7a7264; }
+
+/* ── 滑杆 ── */
+.sliders { margin: 16px 0 10px; border: 1px solid #e2d8bf; border-radius: 12px; background: #fffdf6; padding: 12px 14px 6px; }
+.row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.row .lab { flex: 0 0 88px; font-weight: 600; }
+.row .lab small { display: block; font-weight: 400; font-size: 11px; color: #94897a; }
+.row .nudge {
+  flex: 0 0 34px; height: 34px; border: 1px solid var(--gold); background: #fffdf6;
+  border-radius: 8px; font-size: 15px; padding: 0; touch-action: manipulation;
+}
+.row .nudge:active { background: #f2e7c8; }
+.row input[type=range] { flex: 1; min-width: 0; accent-color: var(--gold-d); }
+.row b { flex: 0 0 52px; text-align: right; font-variant-numeric: tabular-nums; font-size: 14px; color: var(--gold-d); }
+
+/* ── 按钮 ── */
+.btns { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+.btns button {
+  flex: 1 1 auto; border: 1px solid var(--gold); background: #fffdf6; color: var(--ink);
+  border-radius: 10px; padding: 11px 10px; font-size: 14px; font-weight: 600; touch-action: manipulation;
+}
+.btns button:active { background: #f2e7c8; }
+.btns button.primary { background: var(--gold); color: #fff; border-color: var(--gold-d); }
+.btns button.primary:active { background: var(--gold-d); }
+#msg { min-height: 20px; font-size: 13px; color: #3aa876; margin: 4px 2px; }
+
+/* ── 输出 ── */
+textarea {
+  width: 100%; height: 200px; border: 1px solid var(--gold); border-radius: 10px;
+  background: #fffdf6; color: var(--ink); font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace;
+  padding: 10px; resize: vertical;
+}
+footer { margin-top: 14px; font-size: 12.5px; color: #7a7264; }
+footer b { color: var(--ink); }
+footer ol { margin: 6px 0 0; padding-left: 20px; }
+footer li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>调头像</h1>
+  <span class="badge" id="mod-badge" hidden>已微调</span>
+  <p class="sub">一次调好，永久精准 —— 参数直接粘回 members.js</p>
+</header>
+
+<div class="nav">
+  <button id="prev" aria-label="上一个">◀</button>
+  <select id="sel"></select>
+  <button id="next" aria-label="下一个">▶</button>
+</div>
+<div id="mname"></div>
+
+<div class="previews">
+  <div class="circle-wrap" id="circle">
+    <div class="hline"></div><div class="vline"></div>
+    <img id="cimg" alt="">
+  </div>
+  <div class="full-wrap" id="fullwrap">
+    <img id="fimg" alt="">
+    <div class="band" id="band"></div>
+    <div class="cap">红框 = 圆形头像里实际露出的部分<br>（框外全部被裁掉，参照十字线居中）</div>
+  </div>
+</div>
+
+<div class="sliders">
+  <div class="row">
+    <span class="lab">z 脸大小<small>越大=拉近</small></span>
+    <button class="nudge" data-k="z" data-d="-0.01">−</button>
+    <input type="range" id="z" min="1" max="4.5" step="0.01">
+    <button class="nudge" data-k="z" data-d="0.01">＋</button>
+    <b id="zv"></b>
+  </div>
+  <div class="row">
+    <span class="lab">t 上下<small>越大=脸下移</small></span>
+    <button class="nudge" data-k="t" data-d="-0.01">−</button>
+    <input type="range" id="t" min="0" max="0.5" step="0.01">
+    <button class="nudge" data-k="t" data-d="0.01">＋</button>
+    <b id="tv"></b>
+  </div>
+  <div class="row">
+    <span class="lab">x 左右<small>正=右移</small></span>
+    <button class="nudge" data-k="x" data-d="-0.5">−</button>
+    <input type="range" id="x" min="-60" max="60" step="0.1">
+    <button class="nudge" data-k="x" data-d="0.5">＋</button>
+    <b id="xv"></b>
+  </div>
+</div>
+
+<div class="btns">
+  <button id="reset">重置本成员</button>
+  <button id="copyOne">复制本成员</button>
+  <button id="copyAll" class="primary">复制全部 38 人</button>
+</div>
+<div id="msg"></div>
+
+<textarea id="out" readonly></textarea>
+
+<footer>
+  <b>怎么用：</b>
+  <ol>
+    <li>在上方切换成员，拖动三个滑杆，让圆里的脸<b>水平竖直都居中</b>、大小合适（理想：发顶到下巴都在圆内，脸占圆宽约 60–75%）。</li>
+    <li>调完点「<b>复制全部 38 人</b>」（或只调了几位就逐个「复制本成员」）。</li>
+    <li>打开 <b>members.js</b>，替换文件末尾的 <b>window.AVATAR_CROP = {…}</b> 整块（或替换对应的某一行），保存后刷新游戏即可生效。</li>
+  </ol>
+  每人的微调会自动存在本机浏览器里，下次打开还在；「重置本成员」回到自动检测的初始值。
+</footer>
+
+<script src="members.js"></script>
+<script>
+(function () {
+  'use strict';
+  var MEMBERS = window.MEMBERS || [];
+  var BASE = window.AVATAR_CROP || {};
+  var SAVE_KEY = 'tf-avatar-tune-v1';
+
+  /* 当前值 = 自动检测初始值 + 本机微调覆盖 */
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(SAVE_KEY)) || {}; } catch (e) {}
+  var cur = {};
+  MEMBERS.forEach(function (m) {
+    cur[m.id] = Object.assign({}, BASE[m.id], saved[m.id]);
+  });
+
+  var idx = 0;
+  var sel = document.getElementById('sel');
+  var groups = window.MEMBER_GROUPS || [];
+  groups.forEach(function (g) {
+    var og = document.createElement('optgroup');
+    og.label = g.name;
+    MEMBERS.forEach(function (m, i) {
+      if (m.group !== g.id) return;
+      var o = document.createElement('option');
+      o.value = i;
+      o.textContent = m.name + '（' + m.id + '）';
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
+
+  var cimg = document.getElementById('cimg');
+  var fimg = document.getElementById('fimg');
+  var band = document.getElementById('band');
+  var rZ = document.getElementById('z'), rT = document.getElementById('t'), rX = document.getElementById('x');
+  var vZ = document.getElementById('zv'), vT = document.getElementById('tv'), vX = document.getElementById('xv');
+  var out = document.getElementById('out');
+  var msgEl = document.getElementById('msg');
+
+  function member() { return MEMBERS[idx]; }
+  function cv() { return cur[member().id]; }
+
+  /* 与游戏完全一致：width=z%、top=−t%、left=calc(50%+x%)、translateX(−50%) */
+  function paint() {
+    var c = cv();
+    rZ.value = c.z; rT.value = c.t; rX.value = c.x;
+    vZ.textContent = (+c.z).toFixed(2);
+    vT.textContent = (+c.t).toFixed(2);
+    vX.textContent = (+c.x).toFixed(1);
+    cimg.style.width = (c.z * 100) + '%';
+    cimg.style.top = (-c.t * 100) + '%';
+    cimg.style.left = 'calc(50% + ' + c.x + '%)';
+    /* 原图上的取景框（与游戏同样的百分比定位语义换算）：
+       左缘 (z−1−0.02x)/(2z)、上缘 t/(2z)、宽 1/z、高 1/(2z)，单位=图片宽/高 */
+    band.style.left = ((c.z - 1 - 0.02 * c.x) / (2 * c.z) * 100) + '%';
+    band.style.top = (c.t / (2 * c.z) * 100) + '%';
+    band.style.width = (1 / c.z * 100) + '%';
+    band.style.height = (1 / (2 * c.z) * 100) + '%';
+    var m = member();
+    document.getElementById('mname').textContent = m.name + ' · ' + m.id;
+    var diff = saved[m.id] ? true : false;
+    document.getElementById('mod-badge').hidden = !diff;
+    out.value = buildBlock();
+  }
+
+  function loadMember() {
+    var m = member();
+    sel.value = String(idx);
+    var src = 'assets/members/' + m.id + '.png?v=20261110h';
+    if (cimg.getAttribute('data-src') !== src) {
+      cimg.src = src; fimg.src = src;
+      cimg.setAttribute('data-src', src);
+    }
+    paint();
+  }
+
+  function round(n, d) {
+    var f = Math.pow(10, d);
+    return (Math.round(n * f) / f).toFixed(d);
+  }
+  function line(m) {
+    var c = cur[m.id];
+    return '  ' + m.id + ': { z: ' + round(c.z, 2) + ', t: ' + round(c.t, 2) + ', x: ' + round(c.x, 1) + ' },';
+  }
+  function buildBlock() {
+    return 'window.AVATAR_CROP = {\n' + MEMBERS.map(line).join('\n') + '\n};';
+  }
+
+  function setVal(k, v) {
+    var c = cv();
+    var lo = { z: 1, t: 0, x: -60 }[k], hi = { z: 4.5, t: 0.5, x: 60 }[k];
+    c[k] = Math.max(lo, Math.min(hi, v));
+    saved[member().id] = c;
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(saved)); } catch (e) {}
+    paint();
+  }
+
+  rZ.addEventListener('input', function () { setVal('z', +rZ.value); });
+  rT.addEventListener('input', function () { setVal('t', +rT.value); });
+  rX.addEventListener('input', function () { setVal('x', +rX.value); });
+  document.querySelectorAll('.nudge').forEach(function (b) {
+    b.addEventListener('click', function () {
+      setVal(b.getAttribute('data-k'), cv()[b.getAttribute('data-k')] + parseFloat(b.getAttribute('data-d')));
+    });
+  });
+
+  document.getElementById('prev').addEventListener('click', function () { idx = (idx - 1 + MEMBERS.length) % MEMBERS.length; loadMember(); });
+  document.getElementById('next').addEventListener('click', function () { idx = (idx + 1) % MEMBERS.length; loadMember(); });
+  sel.addEventListener('change', function () { idx = +sel.value; loadMember(); });
+
+  document.getElementById('reset').addEventListener('click', function () {
+    var id = member().id;
+    cur[id] = Object.assign({}, BASE[id]);
+    delete saved[id];
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(saved)); } catch (e) {}
+    paint();
+    flash('已重置为自动检测值');
+  });
+
+  function copy(txt, okMsg) {
+    var done = function (ok) { flash(ok ? okMsg : '自动复制失败：点下方文本框（已全选）再手动复制'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function () { done(true); }, function () { done(legacyCopy(txt)); });
+    } else { done(legacyCopy(txt)); }
+  }
+  function legacyCopy(txt) {
+    out.value = txt; out.focus(); out.select();
+    try { return document.execCommand('copy'); } catch (e) { return false; }
+  }
+  function flash(s) {
+    msgEl.textContent = s;
+    clearTimeout(flash._t);
+    flash._t = setTimeout(function () { msgEl.textContent = ''; }, 2600);
+  }
+
+  document.getElementById('copyOne').addEventListener('click', function () {
+    copy(line(member()), '已复制 ' + member().name + ' 的参数，粘回 members.js 对应行即可');
+  });
+  document.getElementById('copyAll').addEventListener('click', function () {
+    copy(buildBlock(), '已复制全部 38 人，替换 members.js 末尾整块');
+  });
+
+  /* 点文本框自动全选，方便手动复制 */
+  out.addEventListener('click', function () { out.focus(); out.select(); });
+
+  /* 图片加载失败（如缺图）：提示但不中断 */
+  cimg.addEventListener('error', function () { flash('注意：找不到 ' + member().id + ' 的图片，预览无效'); });
+  fimg.addEventListener('error', function () { document.getElementById('band').style.display = 'none'; });
+
+  loadMember();
+})();
+</script>
+</body>
+</html>

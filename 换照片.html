@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>换照片 · 立绘处理工具</title>
+<style>
+:root { --ink:#242a2c; --paper:#f5efdf; --gold:#cdb05d; --gold-d:#a8893f; --red:#cf6155; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: linear-gradient(180deg, #efe9da, #f7f3e8);
+  color: var(--ink);
+  font: 15px/1.55 -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  max-width: 560px;
+  margin: 0 auto;
+  -webkit-tap-highlight-color: transparent;
+}
+header h1 { font-size: 22px; margin: 0; display: inline-block; }
+header .sub { margin: 2px 0 0; font-size: 13px; color: #7a7264; }
+
+/* ── 成员切换 ── */
+.nav { display: flex; gap: 8px; align-items: stretch; margin: 14px 0 6px; }
+.nav button {
+  flex: 0 0 48px; border: 1px solid var(--gold); background: #fffdf6; color: var(--ink);
+  border-radius: 10px; font-size: 18px; padding: 8px 0; touch-action: manipulation;
+}
+.nav button:active { background: #f2e7c8; }
+.nav select {
+  flex: 1; min-width: 0; border: 1px solid var(--gold); background: #fffdf6; color: var(--ink);
+  border-radius: 10px; font-size: 15px; padding: 8px 10px; font-weight: 600;
+}
+
+/* ── 上传区 ── */
+.upzone {
+  display: block; margin: 12px 0 4px; padding: 18px 12px; text-align: center;
+  border: 2px dashed var(--gold); border-radius: 14px; background: #fffdf6;
+  color: var(--gold-d); font-weight: 600; cursor: pointer;
+}
+.upzone.drag { background: #f2e7c8; }
+.upzone small { display: block; font-weight: 400; font-size: 12px; color: #94897a; margin-top: 3px; }
+.opt { display: flex; align-items: center; gap: 8px; margin: 6px 2px; font-size: 13.5px; color: #7a7264; }
+#warn { display: none; margin: 8px 2px; padding: 8px 12px; border: 1px solid #e0483f;
+  border-radius: 10px; background: #fbeae4; color: #a33a2f; font-size: 13.5px; }
+
+/* ── 预览区 ── */
+.previews { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; margin-top: 10px; }
+.full-wrap { position: relative; flex-shrink: 0; }
+.full-wrap canvas {
+  display: block; width: 270px; height: 540px;
+  background: repeating-conic-gradient(#e8e2d2 0 25%, #f4efe2 0 50%) 0 0/20px 20px;
+  box-shadow: 0 2px 8px rgba(67,37,12,.15); border-radius: 4px;
+}
+.full-wrap .band {
+  position: absolute; border: 2px dashed #e0483f; background: rgba(224,72,63,.13);
+  pointer-events: none;
+}
+.cap { width: 270px; margin-top: 5px; font-size: 12px; color: #7a7264; }
+.circle-wrap {
+  position: relative; width: 200px; height: 200px; border-radius: 50%;
+  overflow: hidden; border: 2px solid var(--gold); background: #efe9da;
+  box-shadow: 0 3px 10px rgba(67,37,12,.18); flex-shrink: 0;
+}
+.circle-wrap img {
+  position: absolute; left: 50%; top: 0; width: 100%; max-width: none; height: auto;
+  transform: translateX(-50%); pointer-events: none;
+}
+.circle-wrap .hline, .circle-wrap .vline {
+  position: absolute; background: rgba(207,97,85,.75); pointer-events: none; z-index: 3;
+}
+.circle-wrap .hline { left: 0; right: 0; top: 50%; height: 1px; }
+.circle-wrap .vline { top: 0; bottom: 0; left: 50%; width: 1px; }
+
+/* ── 滑杆 ── */
+.sliders { margin: 14px 0 8px; border: 1px solid #e2d8bf; border-radius: 12px; background: #fffdf6; padding: 12px 14px 6px; }
+.row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.row .lab { flex: 0 0 92px; font-weight: 600; }
+.row .lab small { display: block; font-weight: 400; font-size: 11px; color: #94897a; }
+.row .nudge {
+  flex: 0 0 34px; height: 34px; border: 1px solid var(--gold); background: #fffdf6;
+  border-radius: 8px; font-size: 15px; padding: 0; touch-action: manipulation;
+}
+.row .nudge:active { background: #f2e7c8; }
+.row input[type=range] { flex: 1; min-width: 0; accent-color: var(--gold-d); }
+.row b { flex: 0 0 58px; text-align: right; font-variant-numeric: tabular-nums; font-size: 14px; color: var(--gold-d); }
+
+/* ── 信息与按钮 ── */
+#info {
+  margin: 8px 2px; padding: 10px 12px; border: 1px solid #e2d8bf; border-radius: 10px;
+  background: #fffdf6; font: 12.5px/1.7 ui-monospace, Menlo, Consolas, monospace; color: #4c4a42;
+  white-space: pre-wrap;
+}
+.btns { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.btns button {
+  flex: 1 1 auto; border: 1px solid var(--gold); background: #fffdf6; color: var(--ink);
+  border-radius: 10px; padding: 11px 10px; font-size: 14px; font-weight: 600; touch-action: manipulation;
+}
+.btns button:active { background: #f2e7c8; }
+.btns button.primary { background: var(--gold); color: #fff; border-color: var(--gold-d); }
+.btns button.primary:active { background: var(--gold-d); }
+#msg { min-height: 20px; font-size: 13px; color: #3aa876; margin: 2px 2px; }
+footer { margin-top: 12px; font-size: 12.5px; color: #7a7264; }
+footer b { color: var(--ink); }
+footer ol { margin: 6px 0 0; padding-left: 20px; }
+footer li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>换照片</h1>
+  <p class="sub">上传新照片 → 自动处理成游戏规格 → 下载替换</p>
+</header>
+
+<div class="nav">
+  <button id="prev" aria-label="上一个">◀</button>
+  <select id="sel"></select>
+  <button id="next" aria-label="下一个">▶</button>
+</div>
+
+<label class="upzone" id="upzone">
+  点这里选照片（或拖进来）
+  <input type="file" id="file" accept="image/*" hidden>
+  <small>需要「透明底 PNG」的半身照（自己抠好图的）</small>
+</label>
+<div class="opt">
+  <input type="checkbox" id="decont" checked>
+  <label for="decont">自动清理半透杂边（抠图去污，和之前的处理一致）</label>
+</div>
+<div id="warn"></div>
+
+<div class="previews">
+  <div class="full-wrap">
+    <canvas id="fullC" width="700" height="1400"></canvas>
+    <div class="band" id="band"></div>
+    <div class="cap">红框 = 手机屏（390px）签售页实际露出的部分<br>（框外被裁掉；右圆 = 结算头像）</div>
+  </div>
+  <div class="circle-wrap" id="circle">
+    <div class="hline"></div><div class="vline"></div>
+    <img id="cimg" alt="">
+  </div>
+</div>
+
+<div class="sliders">
+  <div class="row">
+    <span class="lab">缩放<small>相对自动值</small></span>
+    <button class="nudge" data-k="us" data-d="-0.01">−</button>
+    <input type="range" id="us" min="0.6" max="1.6" step="0.01">
+    <button class="nudge" data-k="us" data-d="0.01">＋</button>
+    <b id="usv"></b>
+  </div>
+  <div class="row">
+    <span class="lab">上下<small>px，正=下移</small></span>
+    <button class="nudge" data-k="uy" data-d="-5">−</button>
+    <input type="range" id="uy" min="-250" max="250" step="1">
+    <button class="nudge" data-k="uy" data-d="5">＋</button>
+    <b id="uyv"></b>
+  </div>
+  <div class="row">
+    <span class="lab">左右<small>px，正=右移</small></span>
+    <button class="nudge" data-k="ux" data-d="-5">−</button>
+    <input type="range" id="ux" min="-250" max="250" step="1">
+    <button class="nudge" data-k="ux" data-d="5">＋</button>
+    <b id="uxv"></b>
+  </div>
+  <div class="row">
+    <span class="lab">重置</span>
+    <button id="resetPos" style="flex:1;border:1px solid var(--gold);background:#fffdf6;border-radius:8px;padding:8px;font-size:13px;touch-action:manipulation">恢复自动位置（×1.00 / 0 / 0）</button>
+  </div>
+</div>
+
+<div id="info">还没选照片。上传后这里显示检测结果和要粘回 members.js 的参数。</div>
+
+<div class="btns">
+  <button id="upload" class="primary">上传替换进游戏</button>
+  <button id="download">下载 PNG</button>
+  <button id="copyPlay">复制 MEMBER_PLAY 行</button>
+  <button id="tryOld">用现有立绘试跑</button>
+</div>
+<div id="msg"></div>
+
+<footer>
+  <b>怎么用：</b>
+  <ol>
+    <li>选好成员，点上方选一张<b>已抠图（透明底）的半身照</b>；工具会自动：去杂边 → 缩放到标准大小（头顶对齐、主体居中）→ 边缘羽化。</li>
+    <li>右边红框就是签售页能露出的范围；不满意就拖三个滑杆微调（通常不用动）。</li>
+    <li>满意就点「<b>上传替换进游戏</b>」：新图直接写进游戏（旧图自动备份到 备份/换图前/），members.js 的立绘参数（k/l）也同步更新，手机刷新游戏即见。</li>
+    <li>想留一份就点「下载 PNG」；如果传的是<b>没抠图的照片</b>，会走「原图交给 Claude 处理」模式，不直接进游戏。</li>
+    <li>换图后该成员的头像参数（z/t/x）是按旧照片调的，去「<b>调头像</b>」重调一遍；立绘也去「<b>调立绘</b>」里点「重置本成员」再微调。</li>
+  </ol>
+  注意：如果照片里肩膀/身体本来就贴到照片边缘被裁掉，工具补不出来——需要一张拍得更全的照片。
+</footer>
+
+<script src="members.js"></script>
+<script>
+(function () {
+  'use strict';
+  var MEMBERS = window.MEMBERS || [];
+  var GROUPS = window.MEMBER_GROUPS || [];
+  var CROP = window.AVATAR_CROP || {};
+
+  var idx = 0;
+  var srcImg = null, srcW = 0, srcH = 0;
+  var auto = null;              // 检测结果
+  var uScale = 1, uDy = 0, uDx = 0;
+  var out = null;               // {k,l,screenHead,headWc,bottomC,...}
+  var busy = false;
+  var curFile = null;           // 本次上传的原始文件
+  var uploading = false;
+
+  var workC = document.createElement('canvas');
+  var fullC = document.getElementById('fullC');
+  var fctx = fullC.getContext('2d');
+  var band = document.getElementById('band');
+  var cimg = document.getElementById('cimg');
+  var infoEl = document.getElementById('info');
+  var msgEl = document.getElementById('msg');
+  var warnEl = document.getElementById('warn');
+  var rUS = document.getElementById('us'), rUY = document.getElementById('uy'), rUX = document.getElementById('ux');
+
+  /* ── 成员切换 ── */
+  var sel = document.getElementById('sel');
+  GROUPS.forEach(function (g) {
+    var og = document.createElement('optgroup');
+    og.label = g.name;
+    MEMBERS.forEach(function (m, i) {
+      if (m.group !== g.id) return;
+      var o = document.createElement('option');
+      o.value = i;
+      o.textContent = m.name + '（' + m.id + '）';
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
+  function member() { return MEMBERS[idx]; }
+  sel.addEventListener('change', function () { idx = +sel.value; applyCrop(); });
+  document.getElementById('prev').addEventListener('click', function () { idx = (idx - 1 + MEMBERS.length) % MEMBERS.length; sel.value = String(idx); applyCrop(); });
+  document.getElementById('next').addEventListener('click', function () { idx = (idx + 1) % MEMBERS.length; sel.value = String(idx); applyCrop(); });
+
+  function applyCrop() {
+    var c = CROP[member().id] || { z: 1.9, t: 0.02, x: 0 };
+    cimg.style.width = (c.z * 100) + '%';
+    cimg.style.top = (-c.t * 100) + '%';
+    cimg.style.left = 'calc(50% + ' + c.x + '%)';
+  }
+  applyCrop();
+
+  /* ── 上传 ── */
+  var upzone = document.getElementById('upzone');
+  var fileInput = document.getElementById('file');
+  upzone.addEventListener('click', function (e) { if (e.target !== fileInput) fileInput.click(); });
+  fileInput.addEventListener('change', function () { if (fileInput.files[0]) loadFile(fileInput.files[0]); });
+  ['dragover', 'dragenter'].forEach(function (t) {
+    upzone.addEventListener(t, function (e) { e.preventDefault(); upzone.classList.add('drag'); });
+  });
+  ['dragleave', 'drop'].forEach(function (t) {
+    upzone.addEventListener(t, function (e) { e.preventDefault(); upzone.classList.remove('drag'); });
+  });
+  upzone.addEventListener('drop', function (e) {
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) loadFile(f);
+  });
+  document.getElementById('tryOld').addEventListener('click', function () {
+    setMsg('载入现有立绘中…');
+    fetch('assets/members/' + member().id + '.png?v=20261110h')
+      .then(function (r) { if (!r.ok) throw 0; return r.blob(); })
+      .then(function (b) { loadFile(b); })
+      .catch(function () { setMsg('载入失败：找不到 ' + member().id + ' 的现有立绘'); });
+  });
+
+  function loadFile(file) {
+    if (busy) return;
+    curFile = file;
+    var url = URL.createObjectURL(file);
+    var im = new Image();
+    im.onload = function () {
+      URL.revokeObjectURL(url);
+      setMsg('检测处理中…');
+      busy = true;
+      setTimeout(function () {
+        try {
+          prep(im);
+          setMsg('完成：' + file.name || member().id);
+        } catch (err) {
+          setMsg('处理出错：' + err.message);
+        }
+        busy = false;
+      }, 30);
+    };
+    im.onerror = function () { URL.revokeObjectURL(url); setMsg('这张图读不出来，换个文件试试'); };
+    im.src = url;
+  }
+
+  /* ── 处理流水线（与之前的 Python 管线一致） ── */
+  function prep(im) {
+    var maxDim = 2600;
+    var sw = im.naturalWidth, sh = im.naturalHeight;
+    var pre = Math.min(1, maxDim / Math.max(sw, sh));
+    workC.width = Math.max(1, Math.round(sw * pre));
+    workC.height = Math.max(1, Math.round(sh * pre));
+    var wctx = workC.getContext('2d');
+    wctx.imageSmoothingEnabled = true; wctx.imageSmoothingQuality = 'high';
+    wctx.drawImage(im, 0, 0, workC.width, workC.height);
+    var d = wctx.getImageData(0, 0, workC.width, workC.height);
+    var W = workC.width, H = workC.height;
+
+    var hasAlpha = false;
+    for (var p = 0; p < W * H; p++) if (d.data[p * 4 + 3] < 250) { hasAlpha = true; break; }
+    warn(hasAlpha ? '' : '这张照片没有透明底。游戏立绘需要透明底 PNG，请先抠图（也可以继续看效果，但会是一个整块矩形）。');
+
+    if (hasAlpha && document.getElementById('decont').checked) decontaminate(d, W, H);
+
+    /* 检测：行剖面 → 头顶 → 真实头宽走查 → 主体框 */
+    var lo = new Int32Array(H), hi = new Int32Array(H);
+    for (var y = 0; y < H; y++) {
+      var l = -1, r = -1, base = y * W;
+      for (var x = 0; x < W; x++) if (d.data[(base + x) * 4 + 3] >= 30) { l = x; break; }
+      for (x = W - 1; x >= 0; x--) if (d.data[(base + x) * 4 + 3] >= 30) { r = x; break; }
+      lo[y] = l; hi[y] = r;
+    }
+    var headTop = -1;
+    for (y = 0; y < H; y++) if (hi[y] >= 0 && hi[y] - lo[y] + 1 >= 8) { headTop = y; break; }
+    if (headTop < 0) throw new Error('图上找不到主体');
+    var headW = 0, chin = headTop, drops = 0;
+    for (y = headTop; y < Math.min(H, headTop + 900); y++) {
+      var w = hi[y] >= 0 ? hi[y] - lo[y] + 1 : 0;
+      if (w > headW) { headW = w; drops = 0; }
+      else if (headW >= 100 && w < 0.72 * headW) {
+        drops++;
+        if (drops >= 2) { chin = y; break; }
+      } else drops = 0;
+    }
+    var x0 = W, x1 = -1, y0 = H, y1 = -1;
+    for (y = 0; y < H; y++) if (hi[y] >= 0) {
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
+      if (lo[y] < x0) x0 = lo[y];
+      if (hi[y] > x1) x1 = hi[y];
+    }
+    if (headW < 60) throw new Error('头宽检测失败（' + Math.round(headW) + 'px），试试更清晰、头顶完整的照片');
+
+    auto = {
+      headTop: headTop, headW: headW, chin: chin,
+      x0: x0, x1: x1, y0: y0, y1: y1,
+      s: Math.min(280 / headW, 700 / (x1 - x0 + 1)),
+      hasAlpha: hasAlpha
+    };
+    srcImg = workC; srcW = W; srcH = H;
+    paint();
+  }
+
+  /* 半透杂边去污：半透像素染成最近实心颜色（保 alpha），孤立半透岛清零 */
+  function decontaminate(d, W, H) {
+    var semi = new Uint8Array(W * H);
+    var nSemi = 0;
+    for (var p = 0; p < W * H; p++) {
+      var a = d.data[p * 4 + 3];
+      if (a > 0 && a < 250) { semi[p] = 1; nSemi++; }
+      else if (a >= 250) semi[p] = 2;
+    }
+    if (nSemi === 0) return;
+    var visited = new Uint8Array(W * H);
+    var q = new Int32Array(W * H);
+    for (p = 0; p < W * H; p++) {
+      if (semi[p] !== 1 || visited[p]) continue;
+      var qh = 0, qt = 0; q[qt++] = p; visited[p] = 1;
+      var nearSolid = false;
+      while (qh < qt) {
+        var c = q[qh++];
+        var x = c % W, y = (c / W) | 0;
+        var nbs = [c - 1, c + 1, c - W, c + W];
+        for (var i = 0; i < 4; i++) {
+          var n = nbs[i];
+          if (n < 0 || n >= W * H) continue;
+          if (i === 0 && x === 0) continue;
+          if (i === 1 && x === W - 1) continue;
+          if (semi[n] === 2) { nearSolid = true; }
+          else if (semi[n] === 1 && !visited[n]) { visited[n] = 1; q[qt++] = n; }
+        }
+      }
+      if (!nearSolid) {
+        for (i = 0; i < qt; i++) d.data[q[i] * 4 + 3] = 0;
+      } else {
+        for (i = 0; i < qt; i++) {
+          var cc = q[i], cx = cc % W, cy = (cc / W) | 0;
+          var col = nearestSolid(d, semi, cx, cy, W, H, 8);
+          d.data[cc * 4] = col[0]; d.data[cc * 4 + 1] = col[1]; d.data[cc * 4 + 2] = col[2];
+        }
+      }
+    }
+  }
+  function nearestSolid(d, semi, x, y, W, H, depth) {
+    var fall = [d.data[(y * W + x) * 4], d.data[(y * W + x) * 4 + 1], d.data[(y * W + x) * 4 + 2]];
+    for (var r = 1; r <= depth; r++) {
+      for (var dx = -r; dx <= r; dx++) {
+        for (var dy = -r; dy <= r; dy++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          var nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+          if (semi[ny * W + nx] === 2) {
+            var o = (ny * W + nx) * 4;
+            return [d.data[o], d.data[o + 1], d.data[o + 2]];
+          }
+        }
+      }
+    }
+    return fall;
+  }
+
+  /* 羽化：只对 alpha 通道 MinFilter(3) + GaussianBlur(1.2)，不碰颜色 */
+  var GK = [0.0060, 0.0606, 0.2417, 0.3829, 0.2417, 0.0606, 0.0060];
+  function feather(d, W, H) {
+    var a = new Float32Array(W * H), t = new Float32Array(W * H);
+    for (var p = 0; p < W * H; p++) a[p] = d.data[p * 4 + 3];
+    /* 3×3 min：先横后竖 */
+    for (var y = 0; y < H; y++) {
+      var row = y * W;
+      for (var x = 0; x < W; x++) {
+        var m = 255;
+        for (var dx = -1; dx <= 1; dx++) {
+          var xx = x + dx; if (xx < 0) xx = 0; else if (xx >= W) xx = W - 1;
+          var v = a[row + xx]; if (v < m) m = v;
+        }
+        t[row + x] = m;
+      }
+    }
+    for (x = 0; x < W; x++) {
+      for (y = 0; y < H; y++) {
+        m = 255;
+        for (var dy = -1; dy <= 1; dy++) {
+          var yy = y + dy; if (yy < 0) yy = 0; else if (yy >= H) yy = H - 1;
+          v = t[yy * W + x]; if (v < m) m = v;
+        }
+        a[y * W + x] = m;
+      }
+    }
+    /* 高斯 1.2：先横后竖 */
+    for (y = 0; y < H; y++) {
+      var row2 = y * W;
+      for (x = 0; x < W; x++) {
+        var s = 0;
+        for (var j = -3; j <= 3; j++) {
+          var xx2 = x + j; if (xx2 < 0) xx2 = 0; else if (xx2 >= W) xx2 = W - 1;
+          s += GK[j + 3] * a[row2 + xx2];
+        }
+        t[row2 + x] = s;
+      }
+    }
+    for (x = 0; x < W; x++) {
+      for (y = 0; y < H; y++) {
+        s = 0;
+        for (j = -3; j <= 3; j++) {
+          var yy2 = y + j; if (yy2 < 0) yy2 = 0; else if (yy2 >= H) yy2 = H - 1;
+          s += GK[j + 3] * t[yy2 * W + x];
+        }
+        d.data[(y * W + x) * 4 + 3] = s < 0 ? 0 : (s > 255 ? 255 : s);
+      }
+    }
+  }
+
+  /* ── 合成 + 输出参数 ── */
+  function paint() {
+    if (!auto) return;
+    var s2 = auto.s * uScale;
+    var dx = 350 - ((auto.x0 + auto.x1) / 2) * s2 + uDx;
+    var dy = 42 - auto.headTop * s2 + uDy;
+    fctx.clearRect(0, 0, 700, 1400);
+    fctx.imageSmoothingEnabled = true; fctx.imageSmoothingQuality = 'high';
+    fctx.drawImage(srcImg, dx, dy, srcW * s2, srcH * s2);
+    var d = fctx.getImageData(0, 0, 700, 1400);
+    if (auto.hasAlpha) feather(d, 700, 1400);
+    fctx.putImageData(d, 0, 0);
+
+    /* 输出参数（同 MEMBER_PLAY 公式） */
+    var headWc = auto.headW * s2;
+    /* 主体底部（羽化后重新量） */
+    var bottomC = 0;
+    for (var y = 0; y < 1400; y++) {
+      for (var x = 0; x < 700; x++) {
+        if (d.data[(y * 700 + x) * 4 + 3] >= 30) { bottomC = y; break; }
+      }
+      if (bottomC === y) continue;
+    }
+    bottomC = Math.max(bottomC, 100);
+    var k = Math.max(170 * 260 / headWc, 95172 / bottomC);
+    /* 身体中心（可见主体每行中心平均）→ 人物站桌面中央：l = 50 + k×(0.5 − 中心分数) */
+    var cSum = 0, cN = 0;
+    for (y = 42; y <= bottomC && y < 1400; y++) {
+      var l0 = -1, r0 = -1;
+      for (x = 0; x < 700; x++) if (d.data[(y * 700 + x) * 4 + 3] >= 30) { l0 = x; break; }
+      if (l0 < 0) continue;
+      for (x = 699; x >= 0; x--) if (d.data[(y * 700 + x) * 4 + 3] >= 30) { r0 = x; break; }
+      cSum += (l0 + r0) / 2; cN++;
+    }
+    var centerFrac = cN ? cSum / cN / 700 : 0.5;
+    var l = 50 + k * (0.5 - centerFrac);
+    var screenHead = headWc * k / 170;
+    out = { k: k, l: l, screenHead: screenHead, headWc: headWc, bottomC: bottomC, s2: s2, centerFrac: centerFrac };
+
+    /* 红框（签售可见带，按 390px 手机屏换算）：窗口 = [0,390]×[0,盒高]，
+       盒在中央，图片左缘 = (390−盒宽)/2 + l%×盒宽 − 图宽/2 */
+    var boxW = Math.min(0.52 * 390, 260);
+    var imgW2 = k / 100 * boxW;
+    var imgL2 = (390 - boxW) / 2 + l / 100 * boxW - imgW2 / 2;
+    var bl = Math.max(0, Math.min(1, (0 - imgL2) / imgW2));
+    var br = Math.max(0, Math.min(1, (390 - imgL2) / imgW2));
+    band.style.left = (bl * 100) + '%';
+    band.style.width = Math.max(0, (br - bl) * 100) + '%';
+    band.style.top = '0';
+    band.style.height = ((95172 / k) / 1400 * 100) + '%';
+
+    /* 头像预览 */
+    cimg.src = fullC.toDataURL('image/png');
+
+    var okHead = screenHead >= 253;
+    infoEl.textContent =
+      '检测：头宽 ' + Math.round(auto.headW) + 'px · 主体宽 ' + (auto.x1 - auto.x0 + 1) +
+      'px · 自动缩放 s=' + auto.s.toFixed(3) + ' → 实际 ×' + uScale.toFixed(2) + '=' + s2.toFixed(3) + '\n' +
+      '输出：' + member().id + ': { k: ' + k.toFixed(1) + ', l: ' + l.toFixed(1) + ' }' + '\n' +
+      '屏上头宽 ' + screenHead.toFixed(0) + 'px（目标 260）' + (okHead ? ' ✓' : ' ✗ 照片太短够不到桌沿，只能显小');
+
+    var atL = auto.x0 <= 1, atR = auto.x1 >= srcW - 2;
+    warn2((atL || atR) ? '注意：照片里主体' + (atL && atR ? '左右两边' : (atL ? '左边' : '右边')) +
+      '贴到了照片边缘——肩膀被照片本身裁掉了，工具补不出来，需要一张拍得更全的照片。' : '');
+
+    if (location.hash === '#test') {
+      document.title = 'TEST:PASS:' + member().id + ':k=' + k.toFixed(1);
+    }
+  }
+
+  var warnText = '', warnText2 = '';
+  function warn(s) { warnText = s; warnEl.textContent = warnText + (warnText2 ? '\n' + warnText2 : ''); warnEl.style.display = (warnText || warnText2) ? 'block' : 'none'; }
+  function warn2(s) { warnText2 = s; warnEl.textContent = warnText + (warnText2 ? '\n' + warnText2 : ''); warnEl.style.display = (warnText || warnText2) ? 'block' : 'none'; }
+
+  /* ── 滑杆 ── */
+  function paintSoon() { if (paintSoon._r) return; paintSoon._r = requestAnimationFrame(function () { paintSoon._r = 0; paint(); }); }
+  function setU(k, v) {
+    if (k === 'us') { uScale = Math.max(0.6, Math.min(1.6, v)); rUS.value = uScale; document.getElementById('usv').textContent = '×' + uScale.toFixed(2); }
+    if (k === 'uy') { uDy = Math.max(-250, Math.min(250, v)); rUY.value = uDy; document.getElementById('uyv').textContent = uDy; }
+    if (k === 'ux') { uDx = Math.max(-250, Math.min(250, v)); rUX.value = uDx; document.getElementById('uxv').textContent = uDx; }
+    paintSoon();
+  }
+  rUS.addEventListener('input', function () { setU('us', +rUS.value); });
+  rUY.addEventListener('input', function () { setU('uy', +rUY.value); });
+  rUX.addEventListener('input', function () { setU('ux', +rUX.value); });
+  document.querySelectorAll('.nudge').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.getAttribute('data-k');
+      setU(k, { us: uScale, uy: uDy, ux: uDx }[k] + parseFloat(b.getAttribute('data-d')));
+    });
+  });
+  document.getElementById('resetPos').addEventListener('click', function () { setU('us', 1); setU('uy', 0); setU('ux', 0); });
+  document.getElementById('decont').addEventListener('change', function () {
+    if (srcImg && auto) {
+      /* 重新走一遍管线（原图还在 workC 上……重新从 auto 原图处理太复杂，这里直接提示重传） */
+      setMsg('杂边开关只在重新上传照片后生效，再传一次即可');
+    }
+  });
+
+  /* ── 输出 ── */
+  function copy(txt, okMsg) {
+    var done = function (ok) { setMsg(ok ? okMsg : '自动复制失败，请长按上面参数手动复制'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function () { done(true); }, function () { done(false); });
+    } else done(false);
+  }
+  document.getElementById('copyPlay').addEventListener('click', function () {
+    if (!out) { setMsg('先传照片'); return; }
+    copy('  ' + member().id + ': { k: ' + out.k.toFixed(1) + ', l: ' + out.l.toFixed(1) + ' },',
+      '已复制 ' + member().name + ' 的 MEMBER_PLAY 行');
+  });
+  document.getElementById('download').addEventListener('click', function () {
+    if (!out) { setMsg('先传照片'); return; }
+    fullC.toBlob(function (b) {
+      if (!b) { setMsg('生成失败，换个浏览器试试'); return; }
+      var url = URL.createObjectURL(b);
+      var a = document.createElement('a');
+      a.href = url; a.download = member().id + '.png';
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 3000);
+      setMsg('开始下载 ' + member().id + '.png（没反应就长按左图保存）');
+    }, 'image/png');
+  });
+
+  function setMsg(s) { msgEl.textContent = s; }
+
+  /* ── 上传：已抠图 → 处理结果直接替换进游戏（旧图备份，members.js k/l 同步）；
+        没抠图 → 原图传到 待处理/ 交给 Claude ── */
+  function uploadResult() {
+    if (!out || uploading) return;
+    var raw = !(auto && auto.hasAlpha);
+    var m = member();
+    if (location.hash !== '#test' && !confirm(raw
+      ? '这张照片没有透明底，会上传原图给 Claude 处理（不会直接进游戏），继续？'
+      : '把「' + m.name + '」的新立绘替换进游戏？\n旧图会自动备份，members.js 的参数同步更新。')) return;
+    uploading = true;
+    setMsg('上传中…');
+    var qs = 'upload?member=' + encodeURIComponent(m.id)
+      + (raw ? '&raw=1' : '&k=' + out.k.toFixed(1) + '&l=' + out.l.toFixed(1));
+    var name = curFile && curFile.name ? curFile.name : (m.id + '.png');
+    var send = function (blob) {
+      fetch(qs, { method: 'POST', body: blob, headers: { 'X-File-Name': encodeURIComponent(name) } })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (j) {
+          uploading = false;
+          setMsg(raw
+            ? '原图已上传（待处理/' + j.file + '），告诉 Claude 来处理它。'
+            : '已替换进游戏（' + j.file + '），旧图已备份。' + (j.patched ? '立绘参数 k/l 已同步更新' : '但 members.js 没自动更新，请把上面参数发给 Claude') + '；刷新游戏看效果。');
+        })
+        .catch(function (e) { uploading = false; setMsg('上传失败：' + e.message); });
+    };
+    if (raw) {
+      send(curFile);
+    } else {
+      fullC.toBlob(send, 'image/png');
+    }
+  }
+  document.getElementById('upload').addEventListener('click', uploadResult);
+
+  /* 无头自测：#test 载入现有立绘跑通管线 → 上传 __selftest__ 验证服务器写盘 */
+  if (location.hash === '#test') {
+    fetch('assets/members/dcx.png?v=20261110h')
+      .then(function (r) { if (!r.ok) throw new Error('fetch dcx ' + r.status); return r.blob(); })
+      .then(function (b) { loadFile(b); })
+      .then(function () {
+        var tries = 0;
+        (function wait() {
+          if (out) {
+            fullC.toBlob(function (b2) {
+              fetch('upload?member=__selftest__', { method: 'POST', body: b2 })
+                .then(function (r) { return r.json(); })
+                .then(function (j) {
+                  document.title = 'TEST:' + (j && j.ok ? 'PASS' : 'FAIL') + ':' + (j && j.file) + ':k=' + out.k.toFixed(1);
+                })
+                .catch(function (e) { document.title = 'TEST:FAIL:upload:' + e.message; });
+            }, 'image/png');
+          } else if (++tries > 400) {
+            document.title = 'TEST:FAIL:timeout:' + msgEl.textContent;
+          } else setTimeout(wait, 150);
+        })();
+      })
+      .catch(function (e) { document.title = 'TEST:FAIL:chain:' + e.message; });
+  }
+})();
+</script>
+</body>
+</html>

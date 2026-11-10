@@ -1,0 +1,58 @@
+TF家族签售 — 成员图片命名对照表
+================================
+图片放这里：assets/members/  文件名 = 下方「文件名」，格式 .png（透明底最佳）
+放好后刷新浏览器即生效；没放的成员继续显示占位剪影。
+
+【TFBOYS】
+王俊凯   → wjk.png
+王源     → wy.png
+易烊千玺 → yyqx.png
+
+【时代少年团】
+马嘉祺 → mjq.png
+丁程鑫 → dcx.png
+宋亚轩 → syx.png
+刘耀文 → lyw.png
+张真源 → zzy.png
+严浩翔 → yhx.png
+贺峻霖 → hjl.png
+
+【TOP登陆少年】
+朱志鑫 → zhuzhixin.png
+张泽禹 → zhangzeyu.png
+张极   → zhangji.png
+左航   → zuohang.png
+苏新皓 → suxinhao.png
+
+【TF_ING】
+童禹坤 → tongyukun.png
+陈天润 → chentianrun.png
+邓佳鑫 → dengjiaxin.png
+穆祉丞 → muzhicheng.png
+黄朔   → huangshuo.png
+张子墨 → zhangzimo.png
+
+【单飞SOLO】
+张峻豪 → zhangjunhao.png
+余宇涵 → yuyuhan.png
+
+【四代】
+官俊臣 → guanjunchen.png
+张桂源 → zhangguiyuan.png
+张函瑞 → zhanghanrui.png
+王橹杰 → wanglujie.png
+王烁然 → wangshuoran.png
+左奇函 → zuoqihan.png
+陈奕恒 → chenyiheng.png
+杨博文 → yangbowen.png
+杨涵博 → yanghanbo.png
+张奕然 → zhangyiran.png
+聂玮辰 → nieweichen.png
+陈思罕 → chensihan.png
+魏子宸 → weizichen.png
+李煜东 → liyudong.png
+陈浚铭 → chenjunming.png
+
+==========
+也可以不自己改名：把原图随便丢进「桌面/签售原图」文件夹，
+告诉 Claude 即可，会帮你批量抠图、缩放并自动命名放入 assets/members/。

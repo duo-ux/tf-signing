@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ad8055">
+<meta name="description" content="TF家族模拟签售同人小游戏 — 粉丝娱乐，禁止商用">
+<title>TF家族签售会</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Crect%20width='24'%20height='24'%20rx='5'%20fill='%23cdb05d'/%3E%3Cpath%20d='M5%2016l4-8%203%206%202.5-5L17%2016z'%20fill='%23fffefa'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+
+  <!-- ════════════ 视图 1：开局选人（上半墙面 = 签售排队区，下半 = 桌面） ════════════ -->
+  <section id="view-select" class="view">
+    <header class="select-hud">
+      <button id="duration-toggle" class="pill" type="button" aria-label="切换签售时长">
+        <span id="duration-label">∞ 无限时间</span>
+      </button>
+      <div class="pill-count">已选 <b id="selected-count">0</b> 人</div>
+    </header>
+
+    <div class="select-desk">
+      <div class="mode-bar">
+        <div class="mode-toggle" role="tablist" aria-label="队列模式">
+          <button id="mode-group" type="button" role="tab" aria-selected="true">组合选择</button>
+          <button id="mode-shuffle" type="button" role="tab" aria-selected="false">随机排队</button>
+        </div>
+        <div id="group-chips" class="group-chips"></div>
+      </div>
+
+      <div class="select-actions">
+        <button id="btn-start" class="btn-primary" type="button" disabled>开始签售</button>
+      </div>
+
+      <footer class="copyright">作者小红书：<a href="https://xhslink.cn/o/Ap3GXmWP8sm" target="_blank" rel="noopener noreferrer">好想吃馒头</a>　本作品仅用于粉丝娱乐，禁止商用</footer>
+    </div>
+  </section>
+
+  <!-- ════════════ 视图 2：签售游玩 ════════════ -->
+  <section id="view-play" class="view" hidden>
+    <div class="play-hud">
+      <div id="time-pill" class="pill" hidden>剩余 <b id="time-num">30</b> 秒</div>
+      <div id="count-wrap" class="pill-count">已签 <b id="play-count">0</b> 人</div>
+    </div>
+
+    <div id="stage" class="stage">
+      <div id="member-queue" class="member-queue" aria-hidden="true"></div>
+      <div id="gift" class="gift" aria-hidden="true"></div>
+    </div>
+
+    <div class="desk">
+      <div id="paper-wrap" class="paper-wrap">
+        <div id="paper" class="paper">
+          <canvas id="ink" width="780" height="679" aria-label="在便签上涂鸦签名"></canvas>
+          <img id="note-frame" alt="" hidden>
+        </div>
+        <button id="handle" type="button" aria-label="签完啦！向上滑动交付">
+          <span class="chip">签完啦！<br>向上滑动</span>
+        </button>
+      </div>
+    </div>
+
+    <button id="btn-end" class="btn-end" type="button">结束签售</button>
+  </section>
+
+  <!-- ════════════ 视图 3：结算结果 ════════════ -->
+  <section id="view-result" class="view result" hidden>
+    <h1 class="result-title">签售结束</h1>
+    <p id="result-sub" class="result-sub"></p>
+    <div id="result-grid" class="result-grid"></div>
+    <div class="result-actions">
+      <div class="action-row">
+        <button id="btn-again" class="btn-primary" type="button">重新来</button>
+        <button id="btn-xhs" class="btn-primary" type="button">小红书分享</button>
+        <button id="btn-share" class="btn-primary" type="button">分享</button>
+      </div>
+      <footer class="copyright">作者小红书：<a href="https://xhslink.cn/o/Ap3GXmWP8sm" target="_blank" rel="noopener noreferrer">好想吃馒头</a>　本作品仅用于粉丝娱乐，禁止商用</footer>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+</main>
+<script src="members.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

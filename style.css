@@ -1,0 +1,547 @@
+/* ================================================================
+ * TF家族模拟签售 — 样式
+ * 配色与纸/便签结构参考 hap Inc.「Theサイン会」
+ * ================================================================ */
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: #424a55;
+  background: #f8f6f0;
+  overscroll-behavior: contain;
+}
+button {
+  font: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+.view[hidden] { display: none !important; }
+
+/* ---------- 背景 ---------- */
+/* 原木桌面：程序生成木纹 wood.svg；放入 assets/bg/desk.jpg 真实木纹照片
+   后自动覆盖（顶层），无需改代码 */
+.wood-bg {
+  background-color: #ad8055;
+  background-image: url('assets/bg/desk.jpg'), url('assets/bg/wood.svg');
+  background-size: cover, 400px 400px;
+  background-position: center, 0 0;
+}
+#view-result {
+  background-color: #f5efdf;
+  background-image: linear-gradient(180deg, #f7f1e2, #efe6cf);
+  background-image: linear-gradient(180deg, #f7f1e2, #efe6cf), url('assets/bg/result_bg.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+/* ---------- 通用小件 ---------- */
+.pill, .pill-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, .88);
+  border: 1px solid #98938b;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-weight: 600;
+  font-size: 15px;
+  color: #424a55;
+  white-space: nowrap;
+}
+.pill { cursor: pointer; }
+.pill-count { pointer-events: none; }
+.pill-count b { font-size: 17px; color: #242a2c; }
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #242a2c;
+  color: #fff4c6;
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 52px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(36, 42, 44, .35);
+  text-decoration: none;
+  transition: transform .12s ease, opacity .12s ease;
+}
+.btn-primary:active { transform: scale(.96); }
+.btn-primary:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; }
+
+.copyright {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, .78);
+  margin: 10px 0 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+}
+.copyright a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+/* 轻提示 toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 60;
+  max-width: 82vw;
+  padding: 10px 18px;
+  border-radius: 20px;
+  background: rgba(40, 42, 40, .92);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
+}
+
+/* ════════════ 视图 1：选人（上半墙面排队区 / 下半桌面） ════════════ */
+#view-select {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  /* 上半：与签售页同款浅色墙面 */
+  background-color: #dedbd3;
+  background-image: linear-gradient(90deg, #dedbd3, #f4f2ed 60%, #dedbd3);
+  padding-bottom: 0;   /* 木桌直接贴底（安全区内缩放进桌内） */
+}
+.select-desk {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;   /* 桌面块贴底 */
+  background-color: #ad8055;
+  background-image: url('assets/bg/desk.jpg'), url('assets/bg/wood.svg');
+  background-size: cover, 400px 400px;
+  background-position: center, 0 0;
+  border-top: 6px solid #90623f;
+  box-shadow: inset 0 6px 8px rgba(67, 37, 12, .15);
+  padding-top: 14px;
+  /* 桌面加高：块底不动、顶边抬升 → 桌面更大，模式/开始按钮整体上移 */
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+/* 桌面块上沿的踢脚线（墙面与桌面交界，同签售页 stage 底部） */
+.select-desk::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: -26px;
+  height: 20px;
+  background: linear-gradient(#b8afa1, #d5cbbd);
+  pointer-events: none;
+}
+.select-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 14px 8px;
+}
+/* （首页 5 人英雄区已移除；上墙面 = 排队区，下桌面 = 操作区） */
+
+.mode-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  padding: 0 14px 12px;
+}
+.mode-toggle {
+  display: flex;
+  gap: 4px;
+  background: rgba(36, 42, 44, .28);
+  border-radius: 999px;
+  padding: 4px;
+}
+.mode-toggle button {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  padding: 9px 22px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+}
+.mode-toggle button.active { background: #242a2c; color: #fff4c6; }
+.group-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.group-chip {
+  border: 1.5px solid var(--gc, #888);
+  color: #fff;
+  background: rgba(255, 255, 255, .14);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+}
+.group-chip.on { background: var(--gc, #888); border-color: var(--gc, #888); }
+.group-chip.full { box-shadow: 0 0 0 2px rgba(255, 255, 255, .65); }
+
+.select-actions {
+  display: flex;
+  justify-content: center;
+  padding: 4px 14px 6px;
+}
+
+/* ════════════ 视图 2：签售 ════════════ */
+#view-play {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* 浅色墙面（原版 backdrop 配色）：人物靠墙站立，下方才是木桌 */
+  background: linear-gradient(90deg, #dedbd3, #f4f2ed 60%, #dedbd3);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+.play-hud {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 0;
+  position: relative;
+  z-index: 15;
+}
+#time-pill.urgent {
+  color: #cf6155;
+  border-color: #cf6155;
+  animation: urgent-pulse 1s ease infinite;
+}
+#time-pill.urgent b { color: #cf6155; }
+@keyframes urgent-pulse {
+  50% { box-shadow: inset 0 0 0 3px #df3030, 0 0 14px rgba(223, 48, 48, .55); }
+}
+#count-wrap.pop { animation: pop .25s ease; }
+@keyframes pop { 50% { transform: scale(1.22); } }
+
+.stage { position: relative; flex: 1; min-height: 0; }
+/* 墙面底部踢脚线（原版 backdrop:after 同款配色） */
+.stage::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 20px;
+  background: linear-gradient(#b8afa1, #d5cbbd);
+  z-index: 4;
+}
+/* 排队区（原版 .queue 同款）：当前成员居中，其余半身立绘在左侧排队 */
+.member-queue {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  transition: transform .5s cubic-bezier(.2, .7, .2, 1);
+}
+.member-queue.entering { transform: translateX(-20%); }   /* 开局整队从左走进来 */
+.member {
+  position: absolute;
+  left: 0;                     /* 排队槽位的盒贴左边缘（靠 transform 向左排开） */
+  bottom: 0;
+  width: min(52vw, 260px);     /* 人像加大 */
+  aspect-ratio: 200 / 272;   /* 原版 195×268 的比例 */
+  transform-origin: bottom center;
+  transition: transform .24s ease, opacity .24s ease, left .24s ease;
+  will-change: transform;
+  pointer-events: none;
+}
+/* 正在签售的人站在桌面中间（2026-11-10 改：原为贴左边缘） */
+.member[data-slot="0"] { z-index: 5; transform: none; left: calc(50% - min(26vw, 130px)); }
+/* 排队人群：靠左排队、越排越靠左出屏（比原 −22%..−82% 整体右移 12%） */
+.member[data-slot="1"] { z-index: 4; transform: translateX(-10%) translateY(-13px) scale(.86); }
+.member[data-slot="2"] { z-index: 3; transform: translateX(-32%) translateY(-23px) scale(.73); }
+.member[data-slot="3"] { z-index: 2; transform: translateX(-54%) translateY(-32px) scale(.63); }
+.member[data-slot="4"] { z-index: 1; transform: translateX(-76%) translateY(-40px) scale(.54); }
+.member.leaving {           /* 从桌面中央向右滑出屏幕（原版 .fan.leaving） */
+  z-index: 6;
+  transform: translateX(120vw) translateY(22px) rotate(12deg);
+  opacity: 0;
+}
+.member img {
+  position: absolute;
+  top: 0;
+  left: 60%;                 /* 立绘主体贴屏幕左缘（身体左边缘对齐边缘） */
+  transform: translateX(-50%);
+  width: 170%;             /* 立绘 1:2 时正好裁出上半身；下身藏进桌沿后 */
+  max-width: none;
+  height: auto;
+  filter: drop-shadow(0 6px 14px rgba(67, 37, 12, .35));
+  pointer-events: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+/* 排队槽位 1–4：立绘 left 由 JS 按 MEMBER_PLAY 的 l/k 精确计算
+   （身体左缘贴屏幕左缘、每档略出屏形成人墙层次）；此处只保留锚点变换 */
+.member:not([data-slot="0"]) img { transform: translateX(-50%); }
+
+#gift {
+  position: absolute;
+  left: 50%;                /* 与桌面中央的人物对齐（脸部上方） */
+  top: 9%;
+  width: min(44vw, 200px);
+  aspect-ratio: 585 / 509;
+  background: #fff;
+  border: 3px solid #c5a146;
+  border-radius: 4px;
+  transform: translateX(-50%) rotate(-12deg);
+  opacity: 0;
+  z-index: 8;
+  background-size: cover;
+  box-shadow: 0 8px 22px rgba(67, 37, 12, .35);
+  pointer-events: none;
+}
+#gift.show { opacity: 1; animation: gift-in .25s ease both; }
+@keyframes gift-in {
+  from { transform: translateX(-50%) translateY(60px) scale(1.5); }
+  to   { transform: translateX(-50%) translateY(0) scale(1) rotate(-8deg); }
+}
+
+.desk {
+  position: relative;
+  padding: 20px 12px 14px;
+  z-index: 6;
+  min-height: 260px;
+  background-color: #ad8055;
+  background-image: url('assets/bg/desk.jpg'), url('assets/bg/wood.svg');
+  background-size: cover, 400px 400px;
+  background-position: center, 0 0;
+  border-top: 6px solid #90623f;
+  box-shadow: inset 0 6px 8px rgba(67, 37, 12, .15);
+}
+.paper-wrap {
+  position: relative;
+  width: min(80vw, 430px);
+  margin: 0 auto;
+}
+.paper-wrap.returning { transition: transform .16s ease; }
+.paper-wrap.sending {
+  transition: transform .2s ease-in, opacity .2s;
+  transform: translateY(-190px) scale(.25) !important;
+  opacity: 0;
+}
+.paper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 585 / 509;
+  background: #fffefa;
+  border: 5px solid #cdb05d;
+  outline: 1px solid #9d8545;
+  border-radius: 6px;
+  box-shadow: 0 6px 16px rgba(67, 37, 12, .3);
+}
+.paper canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 1px;
+  touch-action: none;
+}
+.paper #note-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+#handle {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: 110px;
+  margin-top: -40px;
+  padding: 44px 0 8px;
+  border: 0;
+  background: transparent;
+  touch-action: none;
+  position: relative;
+  z-index: 1;
+  cursor: grab;
+  color: #fff4c6;
+}
+#handle:disabled { visibility: hidden; }
+#handle .chip {
+  background: rgba(36, 42, 44, .58);
+  color: #fff4c6;
+  padding: 7px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  line-height: 1.45;
+  text-align: center;
+  text-shadow: 0 1px 3px #62442c;
+}
+#handle:not(:disabled) .chip { animation: beckon 1.2s ease-in-out infinite; }
+@keyframes beckon { 50% { transform: translateY(-6px); } }
+
+.btn-end {
+  position: absolute;
+  right: 12px;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  z-index: 20;
+  background: #cf6155;
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .25);
+}
+.btn-end:disabled { opacity: .5; cursor: default; }
+
+/* ════════════ 视图 3：结算 ════════════ */
+#view-result {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 16px 8px;
+}
+.result-title {
+  margin: 4px 0 6px;
+  font-size: 32px;
+  color: #242a2c;
+  letter-spacing: 3px;
+}
+.result-sub {
+  margin: 0 0 18px;
+  color: #8a8577;
+  font-size: 15px;
+}
+.result-grid {
+  width: 100%;
+  max-width: 660px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 14px;
+  padding-bottom: 16px;
+}
+.result-card {
+  background: #fffefa;
+  border: 3px solid #cdb05d;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 3px 8px rgba(67, 37, 12, .12);
+}
+.avatar-wrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #cdb05d;
+  background: #efe9da;
+  flex-shrink: 0;
+}
+/* 立绘 1:2 时：放大 190% 并顶对齐 → 圆圈内正好是头部区域 */
+.avatar-wrap img {
+  position: absolute;
+  left: 50%;
+  top: 2%;
+  width: 190%;
+  max-width: none;
+  height: auto;
+  transform: translateX(-50%);
+  -webkit-user-drag: none;
+}
+.sig {
+  width: 100%;
+  aspect-ratio: 585 / 509;
+  background: #fff;
+  border: 1px solid #e3dcc8;
+  border-radius: 4px;
+  -webkit-user-drag: none;
+}
+.result-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #242a2c;
+}
+.result-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #8a8577;
+  padding: 46px 0;
+}
+.result-actions {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  max-width: 660px;
+  margin-top: auto;
+  padding: 10px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(transparent, rgba(245, 239, 223, .96) 35%);
+}
+.action-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.action-row .btn-primary { padding: 13px 26px; font-size: 16px; flex: 1 1 0; max-width: 190px; }
+@media (max-width: 480px) {
+  .action-row { gap: 8px; }
+  .action-row .btn-primary { padding: 12px 8px; font-size: 14px; max-width: none; }
+}
+#view-result .copyright { color: #9a9384; text-shadow: none; }
+
+/* ---------- 小屏适配 ---------- */
+@media (max-height: 740px) {
+  .paper-wrap { width: min(72vw, 390px); }
+  .desk { padding-top: 12px; min-height: 230px; }
+  .member { width: min(48vw, 240px); }
+}
+@media (max-height: 620px) {
+  .paper-wrap { width: min(64vw, 340px); }
+  .member { width: min(44vw, 215px); }
+  .desk { min-height: 200px; padding-top: 8px; }
+  #handle { height: 92px; padding-top: 36px; }
+}
+@media (max-height: 560px) {
+  .paper-wrap { width: min(58vw, 300px); }
+  .member { width: min(40vw, 190px); }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  .member { width: min(34vw, 165px); }
+  .paper-wrap { width: min(48vw, 250px); }
+  .desk { min-height: 150px; padding-top: 6px; }
+  #handle { height: 76px; padding-top: 30px; margin-top: -30px; }
+}
+
+/* ---------- 减弱动态效果 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
