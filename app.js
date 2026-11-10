@@ -97,13 +97,37 @@ function memberSrc(member) {
   const p = member.img || 'assets/members/' + member.id + '.png';
   return p.indexOf('?') >= 0 ? p : p + '?v=' + ASSET_VERSION;
 }
-/* 给 DOM img 绑定成员图：真图失败则回退占位 */
+/* 给 DOM img 绑定成员图：真图失败则回退占位；加载完成加 .loaded（淡入+提示用） */
 function attachMemberImg(imgEl, member) {
   imgEl.addEventListener('error', function onErr() {
     imgEl.removeEventListener('error', onErr);
     imgEl.src = placeholderURI(member);
   });
+  imgEl.addEventListener('load', function onLoad() {
+    imgEl.classList.add('loaded');
+    refreshLoadingHint();
+  }, { once: true });
   imgEl.src = memberSrc(member);
+  refreshLoadingHint();
+}
+/* 立绘加载提示：排队区立绘未全部加载完时显示「大家正在来签售的路上…」。
+   250ms 防抖：缓存命中/快速加载时不闪提示，只在真慢时才出现 */
+let hintTimer = null;
+function refreshLoadingHint() {
+  const imgs = document.querySelectorAll('#member-queue img');
+  let pending = false;
+  for (const im of imgs) {
+    if (!im.classList.contains('loaded')) { pending = true; break; }
+  }
+  if (!pending) {
+    clearTimeout(hintTimer);
+    $('loading-hint').hidden = true;
+    return;
+  }
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => {
+    if (view === 'play') $('loading-hint').hidden = false;
+  }, 250);
 }
 /* 按成员裁切参数定位头像 img：脸在圆内大小一致、居中（真图失败回退占位时撤掉） */
 function applyAvatarCrop(imgEl, member) {
@@ -810,4 +834,15 @@ refreshSelectUI();
 setMode('group');
 clearPaper();
 showView('select');
+
+/* 访问统计（不蒜子）：数字一到就显示计数器；脚本挂了就一直隐藏 */
+(function visitCounter() {
+  let n = 0;
+  const t = setInterval(() => {
+    const v = $('busuanzi_value_site_uv');
+    const c = $('visit-counter');
+    if (c && v && v.textContent.trim()) { c.hidden = false; clearInterval(t); }
+    else if (++n >= 10) clearInterval(t);
+  }, 600);
+})();
 })();

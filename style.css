@@ -89,6 +89,18 @@ img { max-width: 100%; }
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+/* 访问统计（不蒜子）：选人页桌面左下角小字，脚本失败时保持隐藏 */
+.visit-counter {
+  position: absolute;
+  left: 14px;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  z-index: 2;
+  font-size: 11px;
+  color: rgba(255, 255, 255, .62);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+  pointer-events: none;
+}
+.visit-counter b { font-weight: 700; }
 /* 轻提示 toast */
 .toast {
   position: fixed;
@@ -297,6 +309,31 @@ img { max-width: 100%; }
 /* 排队槽位 1–4：立绘 left 由 JS 按 MEMBER_PLAY 的 l/k 精确计算
    （身体左缘贴屏幕左缘、每档略出屏形成人墙层次）；此处只保留锚点变换 */
 .member:not([data-slot="0"]) img { transform: translateX(-50%); }
+/* 立绘淡入：加载完成后才显示，避免空白立绘突然跳出来 */
+.member img { opacity: 0; transition: opacity .5s ease; }
+.member img.loaded { opacity: 1; }
+
+/* 立绘加载提示 */
+.loading-hint {
+  position: absolute;
+  left: 50%;
+  top: 13%;
+  transform: translateX(-50%);
+  z-index: 7;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .88);
+  color: #7a5a33;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  box-shadow: 0 3px 10px rgba(67, 37, 12, .18);
+  pointer-events: none;
+  animation: hint-in .35s ease both;
+}
+@keyframes hint-in {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+}
 
 #gift {
   position: absolute;

@@ -34,6 +34,7 @@
         <button id="btn-start" class="btn-primary" type="button" disabled>开始签售</button>
       </div>
 
+      <span id="visit-counter" class="visit-counter" hidden>已有 <b id="busuanzi_value_site_uv"></b> 位小伙伴来到签售会</span>
       <footer class="copyright">作者小红书：<a href="https://xhslink.cn/o/Ap3GXmWP8sm" target="_blank" rel="noopener noreferrer">好想吃馒头</a>　本作品仅用于粉丝娱乐，禁止商用</footer>
     </div>
   </section>
@@ -46,6 +47,7 @@
     </div>
 
     <div id="stage" class="stage">
+      <div id="loading-hint" class="loading-hint" hidden>大家正在来签售的路上…</div>
       <div id="member-queue" class="member-queue" aria-hidden="true"></div>
       <div id="gift" class="gift" aria-hidden="true"></div>
     </div>
@@ -82,6 +84,8 @@
 
   <div id="toast" class="toast" role="status" hidden></div>
 </main>
+<!-- 访问统计（不蒜子）：脚本挂了则计数器保持隐藏，无感降级 -->
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 <script src="members.js"></script>
 <script src="app.js"></script>
 </body>
