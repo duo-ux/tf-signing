@@ -549,7 +549,13 @@ function buildResult() {
       grid.append(card);
     });
   }
-  $('result-sub').textContent = '今天你辛苦啦！';
+  /* 副题：有交付 → 「本局 N 人」+（∞ 用时 / 限时最佳）；空手而归 → 一句问候 */
+  if (!records.length) {
+    $('result-sub').textContent = '今天你辛苦啦！';
+  } else {
+    $('result-sub').textContent = '本局 ' + count + ' 人'
+      + (isEndless() ? ' · 用时 ' + formatElapsed(elapsed) : ' · 最佳 ' + best + ' 人');
+  }
 }
 
 /* ════════════ 分享合成（原生 canvas，无外部依赖） ════════════ */
