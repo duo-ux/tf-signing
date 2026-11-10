@@ -9,7 +9,7 @@
 const DURATIONS = [30, 40, 50, 60, Infinity];   // 秒；最后一档 = 无限时间
 const BEST_KEY = 'tf-signing-best';
 const PEN_WIDTH = 10;
-const INK_COLOR = '#242a2c';
+let inkColor = '#242a2c';   // 当前画笔颜色（初始墨黑，可在桌面色盘切换）
 const ENTER_MS = 600;         // 开局整队入场动画时长
 const DELIVER_MS = 390;       // 交付反馈时长（快照弹出）
 const STEP_MS = 240;          // 队列前移一步动画时长
@@ -367,7 +367,7 @@ canvas.addEventListener('pointerdown', e => {
   beginPlay();
   canvas.setPointerCapture(e.pointerId);
   gesture = { type: 'draw', id: e.pointerId, target: canvas, last: point(e) };
-  ctx.fillStyle = INK_COLOR;
+  ctx.fillStyle = inkColor;
   ctx.beginPath();
   ctx.arc(gesture.last.x, gesture.last.y, PEN_WIDTH / 2, 0, Math.PI * 2);
   ctx.fill();
@@ -384,7 +384,7 @@ function draw(e) {
     ctx.beginPath();
     ctx.moveTo(last.x, last.y);
     ctx.lineTo(next.x, next.y);
-    ctx.strokeStyle = INK_COLOR;
+    ctx.strokeStyle = inkColor;
     ctx.lineWidth = PEN_WIDTH;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -786,6 +786,14 @@ $('btn-share').addEventListener('click', generateShareImage);
 /* 小红书分享 = 直接唤起小红书 App（没装 App 时 iOS 停在原地 / Android 无反应，属正常） */
 $('btn-xhs').addEventListener('click', () => { location.href = 'xhsdiscover://'; });
 
+/* 画笔颜色：8 色圆点，点击即换色（初始墨黑） */
+const inkDots = [...document.querySelectorAll('.ink-dot')];
+function setInkColor(color) {
+  inkColor = color;
+  inkDots.forEach(b => b.classList.toggle('on', b.dataset.color === color));
+}
+inkDots.forEach(b => b.addEventListener('click', () => setInkColor(b.dataset.color)));
+
 /* ════════════ 移动端防护（仅页 2 生效，页 1/3 保持正常滚动） ════════════ */
 function preventNativeGesture(e) { if (e.cancelable) e.preventDefault(); }
 for (const type of ['gesturestart', 'gesturechange', 'gestureend', 'dblclick',
@@ -797,7 +805,7 @@ for (const type of ['gesturestart', 'gesturechange', 'gestureend', 'dblclick',
 for (const type of ['touchstart', 'touchmove']) {
   views.play.addEventListener(type, e => {
     if (view !== 'play') return;
-    if (e.target && e.target.closest && e.target.closest('#btn-end')) return;
+    if (e.target && e.target.closest && e.target.closest('#btn-end, #ink-colors')) return;
     preventNativeGesture(e);
   }, { passive: false });
 }

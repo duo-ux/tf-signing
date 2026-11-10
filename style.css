@@ -374,6 +374,31 @@ img { max-width: 100%; }
   width: min(80vw, 430px);
   margin: 0 auto;
 }
+/* 画笔颜色选择：8 色圆点，选中金圈高亮 */
+.ink-colors {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  padding: 0 0 10px;
+}
+.ink-dot {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .9);
+  background: var(--c);
+  box-shadow: 0 2px 5px rgba(67, 37, 12, .35);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform .12s ease;
+}
+.ink-dot.on {
+  outline: 3px solid #cdb05d;
+  outline-offset: 2px;
+  transform: scale(1.15);
+}
 .paper-wrap.returning { transition: transform .16s ease; }
 .paper-wrap.sending {
   transition: transform .2s ease-in, opacity .2s;
